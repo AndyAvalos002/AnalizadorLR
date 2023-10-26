@@ -1,80 +1,44 @@
 package codigo;
-import compilerTools.Token;
-
+import static codigo.Token.*;
 %%
 %class Lexer
 %type Token
-%line
-%column
+
+letra=[a-zA-Z_]
+
+digito=[0-9]
+
+opAg=[\(,\)]
+
+opAr=[*,\+,\-,/]
+
+com=[\,]
+
+
 %{
-    private Token token(String lexeme, String lexicalComp, int line, int column){
-        return new Token(lexeme, lexicalComp, line+1, column+1);
-    }
+    public String lexeme;
 %}
-
-/* Variables básicas de comentarios y espacios */
-TerminadorDeLinea = \r|\n|\r\n
-EntradaDeCaracter = [^\r\n]
-EspacioEnBlanco = {TerminadorDeLinea} | [ \t\f]
-ComentarioTradicional = "/*" [^*] ~"*/" | "/*" "*"+ "/"
-FinDeLineaComentario = "//" {EntradaDeCaracter}* {TerminadorDeLinea}?
-ContenidoComentario = ( [^*] | \*+ [^/*] )*
-ComentarioDeDocumentacion = "/**" {ContenidoComentario} "*"+ "/"
-
-
-
-/* Comentario */
-Comentario = {ComentarioTradicional} | {FinDeLineaComentario} | {ComentarioDeDocumentacion}
-Numero = -?[1-9][0-9]*.[[0-9]*[1-9]]?[e|E][-|+][1-9][0-9]* | -?[1-9][0-9]*[e|E][-|+][1-9][0-9]* | -?[1-9][0-9]*.[0-9]*[1-9] | -?[1-9][0-9]* | 0.0 | 0
-
-
-/*Tipos de Datos*/
-ReservadasD= int|float|char
-
-/* Identificador */
-Letra = [A-Za-zÑñ_ÁÉÍÓÚáéíóúÜü]
-Digito = [0-9]
-Identificador = {Letra}({Letra}|{Digito})*
-
-
 %%
 
-/* Comentarios o espacios en blanco */
-{Comentario}|{EspacioEnBlanco} { /*Ignorar*/ }
+{com} {lexeme=yytext();return coma;}
 
 
+int|float|char {lexeme=yytext(); return reservada;}
+
+(" "|"\t"|\r)+ {/*Ignore*/}
+
+{opAg} {lexeme=yytext(); return agrupacion;}
+{opAr} {lexeme=yytext(); return aritmetico;}
 
 
-/* Tipos de dato */
-{ReservadasD} {return token(yytext(), "tipoDa", yyline, yycolumn);}
+"//".* {/*Ignore*/}
+"\n" {lexeme=yytext(); return salto;}
+"=" {lexeme=yytext(); return asignacion;}
+";"	{lexeme=yytext();return finSentencia;}
+":"	{lexeme=yytext();return puntos;}
 
-/* Identificador */
-{Identificador} { return token(yytext(), "id", yyline, yycolumn);}
+{letra}({letra}|{digito})* {lexeme=yytext(); return id;}
+{digito}+ {lexeme=yytext(); return num;}
 
-/* Numeros */
-{Numero} { return token(yytext(), "num", yyline, yycolumn);}
-
-
-
-/* c */
-\( { return token(yytext(), "(", yyline, yycolumn); }
-\) { return token(yytext(), ")", yyline, yycolumn); }
-\, { return token(yytext(), ",", yyline, yycolumn); }
-\; { return token(yytext(), ";", yyline, yycolumn); }
-\= { return token(yytext(), "=", yyline, yycolumn); }
-
-[+] { return token(yytext(), "+", yyline, yycolumn); }
-[-] { return token(yytext(), "-", yyline, yycolumn); }
-[*] { return token(yytext(), "*", yyline, yycolumn); }
-[/] { return token(yytext(), "/", yyline, yycolumn); }
-
-
-
-[$] { return token(yytext(), "$", yyline, yycolumn);}
-
-
-. { return token(yytext(), "ERROR", yyline, yycolumn); }
-{Numero}{Identificador} { return token(yytext(), "ERROR", yyline, yycolumn); }
-{Numero}{ReservadasD} { return token(yytext(), "ERROR", yyline, yycolumn); }
-
+ . {lexeme=yytext(); return ERROR;}
 
