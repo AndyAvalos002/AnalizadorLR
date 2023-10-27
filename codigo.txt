@@ -1,1 +1,2 @@
-v
+float a;
+a=a;
